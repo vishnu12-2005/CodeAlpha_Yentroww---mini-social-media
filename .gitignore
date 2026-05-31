@@ -7,6 +7,7 @@ env/
 # Django local database & settings
 db.sqlite3
 local_settings.py
+staticfiles/
 
 # Python bytecodes
 __pycache__/
