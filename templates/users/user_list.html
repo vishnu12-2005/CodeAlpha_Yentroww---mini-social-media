@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="comic-card">
+    <div style="display: flex; align-items: center; margin-bottom: 1.5rem;">
+        <a href="javascript:history.back()" class="comic-btn btn-white" style="padding: 0.5rem; font-size: 1rem; margin-right: 15px;">← Back</a>
+        <h1 class="brand-text m-0">{{ title }}</h1>
+    </div>
+
+    <div>
+        {% for u in users_list %}
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; border-bottom: 2px dashed #ccc; padding-bottom: 10px;">
+            <a href="/profile/{{ u.username }}/" style="display: flex; align-items: center; gap: 15px;">
+                <img src="{% if u.profile.avatar %}{{ u.profile.avatar.url }}{% else %}{% static 'images/default_avatar.png' %}{% endif %}" class="avatar-hex" style="width: 50px; height: 50px;">
+                <span style="font-weight: bold; font-size: 1.2rem;">@{{ u.username }}</span>
+            </a>
+            {% if u != request.user %}
+                <button onclick="alert('Follow functionality delegated to profile page for now')" class="comic-btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 1rem;">View</button>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div class="text-center" style="font-family: var(--font-heading); font-size: 1.5rem; padding: 2rem;">No users found 😯</div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

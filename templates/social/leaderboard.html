@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="leaderboard-page text-center">
+    <h1 class="brand-text" style="font-size: 3rem; color: var(--primary-red);">May 25 – May 31 2026</h1>
+    
+    <div class="comic-card mb-4 mt-3" style="background-color: var(--bright-yellow); padding: 10px; border-width: 4px;">
+        <h2 style="font-size: 1.5rem; margin: 0;">🥇 1st Place — ₹500  |  🥈 2nd Place — ₹300  |  🥉 3rd Place — ₹100</h2>
+    </div>
+    
+    <div class="leaderboard-list text-left">
+        {% for leader in leaderboard %}
+        <div class="comic-card mb-3" style="display: flex; align-items: center; gap: 15px; padding: 10px 20px; {% if leader.user == request.user %}background-color: var(--bright-yellow);{% endif %}">
+            <div style="font-size: 2rem; font-weight: bold; width: 40px; text-align: center;">
+                {% if forloop.counter == 1 %}🥇{% elif forloop.counter == 2 %}🥈{% elif forloop.counter == 3 %}🥉{% else %}{{ forloop.counter }}{% endif %}
+            </div>
+            
+            <a href="/profile/{{ leader.user.username }}/" style="display: flex; align-items: center; gap: 15px; flex: 1;">
+                <img src="{% if leader.user.profile.avatar %}{{ leader.user.profile.avatar.url }}{% else %}{% static 'images/default_avatar.png' %}{% endif %}" class="avatar-hex" style="width: 50px; height: 50px;">
+                <span style="font-size: 1.5rem; font-weight: bold; font-family: var(--font-heading);">@{{ leader.user.username }}</span>
+            </a>
+            
+            <div style="font-size: 1.5rem; font-family: var(--font-heading); color: var(--primary-red);">
+                😯 {{ leader.yentroww_count }}
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center" style="font-size: 1.5rem; margin-top: 2rem;">No scores yet this week!</div>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}

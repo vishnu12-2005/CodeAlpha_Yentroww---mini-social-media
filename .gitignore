@@ -1,0 +1,24 @@
+# Virtual environment
+venv/
+ENV/
+env/
+.venv/
+
+# Django local database & settings
+db.sqlite3
+local_settings.py
+
+# Python bytecodes
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Media files (optional, but standard so we don't push user uploads, though let's keep media/ if there are default seed files)
+# Let's not ignore media/ so the user gets the custom burst background and standard avatars!
+# but let's ignore database migrations pyc if any
+
+# IDE settings
+.vscode/
+.idea/
+.DS_Store

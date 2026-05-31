@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="comic-card">
+    <div style="display: flex; align-items: center; margin-bottom: 1.5rem;">
+        <a href="/activity/" class="comic-btn btn-white" style="padding: 0.5rem; font-size: 1rem; margin-right: 15px;">← Back to Activity</a>
+        <h1 class="brand-text m-0">Dashboard 📊</h1>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">
+        <!-- Content Stats -->
+        <div class="comic-card text-center p-3" style="background: var(--clean-white);">
+            <div style="font-size: 2rem; font-weight: bold;">{{ stats.posts }}</div>
+            <div style="font-family: var(--font-heading); font-size: 1.2rem; color: gray;">Total Posts</div>
+        </div>
+        <div class="comic-card text-center p-3" style="background: var(--clean-white);">
+            <div style="font-size: 2rem; font-weight: bold;">{{ stats.reels }}</div>
+            <div style="font-family: var(--font-heading); font-size: 1.2rem; color: gray;">Total Reels</div>
+        </div>
+        <div class="comic-card text-center p-3" style="background: var(--clean-white);">
+            <div style="font-size: 2rem; font-weight: bold;">{{ stats.stories }}</div>
+            <div style="font-family: var(--font-heading); font-size: 1.2rem; color: gray;">Total Stories</div>
+        </div>
+        
+        <!-- Reaction Stats -->
+        <div class="comic-card text-center p-3" style="background: var(--primary-red); color: white;">
+            <div style="font-size: 2rem; font-weight: bold;">{{ stats.y_recv }}</div>
+            <div style="font-family: var(--font-heading); font-size: 1.2rem;">😯 Received</div>
+        </div>
+        <div class="comic-card text-center p-3" style="background: var(--primary-red); color: white;">
+            <div style="font-size: 2rem; font-weight: bold;">{{ stats.a_recv }}</div>
+            <div style="font-family: var(--font-heading); font-size: 1.2rem;">😆 Received</div>
+        </div>
+        <div class="comic-card text-center p-3" style="background: var(--primary-red); color: white;">
+            <div style="font-size: 2rem; font-weight: bold;">{{ stats.s_recv }}</div>
+            <div style="font-family: var(--font-heading); font-size: 1.2rem;">😏 Received</div>
+        </div>
+        
+        <!-- Leaderboard -->
+        <div class="comic-card text-center p-3" style="background: var(--bright-yellow); grid-column: 1 / -1;">
+            <div style="font-family: var(--font-heading); font-size: 1.5rem;">Weekly Rank</div>
+            <div style="font-size: 3rem; font-weight: bold; margin-top: 10px;">
+                {% if stats.rank %}
+                    {% if stats.rank == 1 %}🥇 1st{% elif stats.rank == 2 %}🥈 2nd{% elif stats.rank == 3 %}🥉 3rd{% else %}#{{ stats.rank }}{% endif %}
+                {% else %}
+                    Unranked
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="comic-card">
+    <div style="display: flex; align-items: center; margin-bottom: 1.5rem;">
+        <a href="/activity/" class="comic-btn btn-white" style="padding: 0.5rem; font-size: 1rem; margin-right: 15px;">← Back to Activity</a>
+        <h1 class="brand-text m-0">{{ title }}</h1>
+    </div>
+
+    <div class="masonry-grid" style="column-count: 3; column-gap: 15px;">
+        {% for item in items %}
+            <a href="/posts/{{ item.id }}/" class="comic-card mb-3" style="display: block; padding: 0; overflow: hidden;">
+                {% if item.media_type == 'video' %}
+                    <video src="{{ item.media_file.url }}" style="width: 100%; display: block;" muted></video>
+                {% elif item.media_type == 'image' %}
+                    <img src="{{ item.media_file.url }}" style="width: 100%; display: block;">
+                {% else %}
+                    <div style="padding: 20px; text-align: center; font-family: var(--font-heading);">{{ item.caption|truncatechars:50 }}</div>
+                {% endif %}
+            </a>
+        {% empty %}
+            <div style="grid-column: 1 / -1; display: flex; justify-content: center; margin-top: 2rem;">
+                <span style="color: gray; font-family: var(--font-heading); font-size: 2rem;">Nothing here yet 😯</span>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

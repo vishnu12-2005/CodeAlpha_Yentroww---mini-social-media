@@ -1,0 +1,137 @@
+:root {
+  --primary-red: #C0152A;
+  --bright-yellow: #FFD700;
+  --deep-black: #111111;
+  --clean-white: #FFFFFF;
+  --accent-blue: #1A6BCC;
+  --dark-red-shadow: #8B0000;
+  --font-heading: 'Bangers', cursive;
+  --font-body: 'Nunito', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--clean-white);
+  background-image: url('../images/comic_background.png');
+  background-repeat: repeat;
+  background-size: 500px 500px;
+  color: var(--deep-black);
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6, .brand-text {
+  font-family: var(--font-heading);
+  letter-spacing: 1px;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+ul {
+  list-style: none;
+}
+
+/* Halftone dot pattern background for red areas */
+.bg-red-halftone {
+  background-color: var(--primary-red);
+  background-image: radial-gradient(var(--dark-red-shadow) 15%, transparent 16%),
+                    radial-gradient(var(--dark-red-shadow) 15%, transparent 16%);
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
+}
+
+/* Loading animation container */
+#global-loader {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background-color: transparent;
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 0.5s ease-out;
+  pointer-events: none;
+}
+#global-loader.fade-out {
+  opacity: 0;
+}
+
+.loader-text {
+  font-family: var(--font-heading);
+  color: var(--bright-yellow);
+  font-size: 5rem;
+  text-shadow: 4px 4px 0 var(--deep-black);
+  display: flex;
+}
+
+.loader-letter {
+  opacity: 0;
+  transform: scale(0);
+  animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes popIn {
+  0% { opacity: 0; transform: scale(0.5); }
+  50% { opacity: 1; transform: scale(1.2); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* Global utility classes */
+.text-center { text-align: center; }
+.mt-1 { margin-top: 0.25rem; }
+.mt-2 { margin-top: 0.5rem; }
+.mt-3 { margin-top: 1rem; }
+.mt-4 { margin-top: 1.5rem; }
+.mb-1 { margin-bottom: 0.25rem; }
+.mb-2 { margin-bottom: 0.5rem; }
+.mb-3 { margin-bottom: 1rem; }
+.mb-4 { margin-bottom: 1.5rem; }
+
+@keyframes reactionContainerAnim {
+  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+  15% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+  25% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -120%) scale(0.8); opacity: 0; }
+}
+
+/* Comic Toast Notification */
+.comic-toast {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  background: var(--bright-yellow);
+  color: var(--deep-black);
+  border: 3px solid var(--deep-black);
+  box-shadow: 4px 4px 0 var(--deep-black);
+  padding: 12px 24px;
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+  z-index: 100000;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transform: translateX(150%);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease-out;
+  opacity: 0;
+  pointer-events: none;
+}
+.comic-toast.show {
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+.comic-toast.error {
+  background: var(--primary-red);
+  color: white;
+}

@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="explore-page">
+    <div style="position: sticky; top: 60px; z-index: 100; background: white; padding: 10px 0;">
+        <form method="GET" action="/explore/">
+            <input type="text" name="q" value="{{ q }}" class="comic-input mb-2" placeholder="Search posts, reels, people, tags..." style="font-size: 1.2rem; border-color: var(--bright-yellow); width: 100%;">
+            <input type="hidden" name="tab" value="{{ tab }}">
+        </form>
+        
+        <div class="explore-tabs" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px;">
+            <a href="/explore/?q={{ q }}&tab=all" class="comic-btn {% if tab == 'all' %}btn-primary{% else %}btn-white{% endif %}" style="padding: 0.2rem 1rem; font-size: 1rem; text-decoration: none; white-space: nowrap;">All</a>
+            <a href="/explore/?q={{ q }}&tab=photos" class="comic-btn {% if tab == 'photos' %}btn-primary{% else %}btn-white{% endif %}" style="padding: 0.2rem 1rem; font-size: 1rem; text-decoration: none; white-space: nowrap;">Photos</a>
+            <a href="/explore/?q={{ q }}&tab=videos" class="comic-btn {% if tab == 'videos' %}btn-primary{% else %}btn-white{% endif %}" style="padding: 0.2rem 1rem; font-size: 1rem; text-decoration: none; white-space: nowrap;">Videos</a>
+            <a href="/explore/?q={{ q }}&tab=people" class="comic-btn {% if tab == 'people' %}btn-primary{% else %}btn-white{% endif %}" style="padding: 0.2rem 1rem; font-size: 1rem; text-decoration: none; white-space: nowrap;">People</a>
+            <a href="/explore/?q={{ q }}&tab=tags" class="comic-btn {% if tab == 'tags' %}btn-primary{% else %}btn-white{% endif %}" style="padding: 0.2rem 1rem; font-size: 1rem; text-decoration: none; white-space: nowrap;">Tags</a>
+        </div>
+        
+        <div class="trending-tags mt-2" style="display: flex; gap: 10px; overflow-x: auto;">
+            <a href="/explore/?q=yentroww&tab=tags" style="background: var(--primary-red); color: white; padding: 5px 15px; border-radius: 20px; border: 2px solid black; font-weight: bold; white-space: nowrap; text-decoration: none; font-size: 0.9rem;">#yentroww</a>
+            <a href="/explore/?q=trending&tab=tags" style="background: var(--primary-red); color: white; padding: 5px 15px; border-radius: 20px; border: 2px solid black; font-weight: bold; white-space: nowrap; text-decoration: none; font-size: 0.9rem;">#trending</a>
+            <a href="/explore/?q=comedy&tab=tags" style="background: var(--primary-red); color: white; padding: 5px 15px; border-radius: 20px; border: 2px solid black; font-weight: bold; white-space: nowrap; text-decoration: none; font-size: 0.9rem;">#comedy</a>
+        </div>
+    </div>
+    
+    {% if tab != 'people' %}
+    <div class="masonry-grid mt-4" style="column-count: 3; column-gap: 15px;">
+        {% for item in items %}
+            {% if item.is_post %}
+                <a href="/posts/{{ item.id }}/" class="masonry-item comic-card" style="margin-bottom: 15px; padding: 0; overflow: hidden; display: inline-block; width: 100%; text-decoration: none; color: inherit;">
+            {% else %}
+                <a href="/reels/{{ item.id }}/" class="masonry-item comic-card" style="margin-bottom: 15px; padding: 0; overflow: hidden; display: inline-block; width: 100%; text-decoration: none; color: inherit;">
+            {% endif %}
+                {% if item.media_file %}
+                    {% if item.media_type == 'video' %}
+                        <video src="{{ item.media_file.url }}" style="width: 100%; display: block;" muted loop onmouseover="this.play()" onmouseout="this.pause()"></video>
+                    {% else %}
+                        <img src="{{ item.media_file.url }}" style="width: 100%; display: block;">
+                    {% endif %}
+                {% elif item.video_file %}
+                    <video src="{{ item.video_file.url }}" style="width: 100%; display: block;" muted loop onmouseover="this.play()" onmouseout="this.pause()"></video>
+                {% else %}
+                    <div style="padding: 20px; font-family: var(--font-heading); font-size: 1.2rem; text-align: center;">{{ item.caption }}</div>
+                {% endif %}
+                <div style="padding: 10px; display: flex; align-items: center; justify-content: space-between; background: white; border-top: 2px solid black;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <img src="{% if item.user.profile.avatar %}{{ item.user.profile.avatar.url }}{% else %}{% static 'images/default_avatar.png' %}{% endif %}" class="avatar-hex" style="width: 30px; height: 30px;">
+                        <span style="font-weight: bold; font-size: 0.9rem;">@{{ item.user.username }}</span>
+                    </div>
+                    {% if not item.is_post %}
+                        <span style="font-size: 1.2rem;" title="Reel">🎬</span>
+                    {% endif %}
+                </div>
+            </a>
+        {% empty %}
+            <div style="grid-column: 1/-1; text-align: center; padding: 50px 0; font-family: var(--font-heading); font-size: 2rem;">
+                No matches found 😯
+            </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 20px;" class="mt-4">
+        {% for u in users_list %}
+            <div class="comic-card text-center" style="display: flex; flex-direction: column; align-items: center; padding: 20px; background: white;">
+                <img src="{% if u.profile.avatar %}{{ u.profile.avatar.url }}{% else %}{% static 'images/default_avatar.png' %}{% endif %}" class="avatar-hex" style="width: 75px; height: 75px; border: 3px solid black;">
+                <h3 class="brand-text mt-2" style="margin: 5px 0;">@{{ u.username }}</h3>
+                <p style="font-size: 0.9rem; color: #555; height: 40px; overflow: hidden; text-overflow: ellipsis; margin-bottom: 10px;">{{ u.profile.bio|default:"No bio yet 😯" }}</p>
+                <a href="/profile/{{ u.username }}/" class="comic-btn btn-primary mt-2" style="font-size: 0.9rem; padding: 4px 15px; width: 100%; text-decoration: none; text-align: center; display: block;">View Profile</a>
+            </div>
+        {% empty %}
+            <div style="grid-column: 1/-1; text-align: center; padding: 50px 0; font-family: var(--font-heading); font-size: 2rem;">
+                No users found 😯
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    @media (max-width: 768px) {
+        .masonry-grid { column-count: 2 !important; }
+    }
+</style>
+
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+{% block content %}
+
+<div class="comic-card">
+    <div style="display: flex; align-items: center; margin-bottom: 1.5rem;">
+        <a href="javascript:history.back()" class="comic-btn btn-white" style="padding: 0.5rem; font-size: 1rem; margin-right: 15px;">← Back</a>
+        <h1 class="brand-text m-0">Edit Profile</h1>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <!-- Profile Photo Section -->
+        <div class="text-center mb-4">
+            <div class="avatar-wrapper mb-2">
+                <img id="avatar-preview" src="{% if request.user.profile.avatar %}{{ request.user.profile.avatar.url }}{% else %}{% static 'images/default_avatar.png' %}{% endif %}" class="avatar-hex" style="width: 120px; height: 120px;">
+            </div>
+            
+            <div class="photo-controls">
+                <label for="id_avatar">📸 Change Photo</label>
+                <div style="display: none;">{{ form.avatar }}</div>
+            </div>
+            {% if request.user.profile.avatar %}
+            <div style="margin-top: 8px;">
+                <button type="submit" name="remove_avatar" value="1" class="comic-btn btn-white" style="padding: 4px 14px; font-size: 0.85rem; color: var(--primary-red); border-color: var(--primary-red);">🗑️ Remove Photo</button>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Bio</label>
+            {{ form.bio }}
+        </div>
+        
+        <div class="mb-3">
+            <label class="form-label">Website</label>
+            {{ form.website }}
+        </div>
+        
+        <div class="mb-3">
+            <label class="form-label">Account Type</label>
+            {{ form.account_type }}
+        </div>
+
+        <button type="submit" class="comic-btn btn-primary" style="width: 100%; font-size: 1.5rem; margin-top: 1rem;">SAVE CHANGES</button>
+    </form>
+</div>
+
+<script>
+// Preview selected avatar before upload
+const avatarInput = document.getElementById('id_avatar');
+if (avatarInput) {
+    avatarInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                document.getElementById('avatar-preview').src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+}
+</script>
+{% endblock %}

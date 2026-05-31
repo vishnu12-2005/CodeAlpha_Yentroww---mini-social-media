@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="comic-card" id="post-{{ post.id }}">
+    <div style="display: flex; align-items: center; margin-bottom: 1.5rem;">
+        <a href="javascript:history.back()" class="comic-btn btn-white" style="padding: 0.5rem; font-size: 1rem; margin-right: 15px;">← Back</a>
+        <h1 class="brand-text m-0">Post Detail</h1>
+    </div>
+
+    {% if error %}
+        <div style="text-align: center; font-size: 2rem; margin: 4rem 0;">{{ error }}</div>
+    {% else %}
+        <!-- Same structure as feed post but larger media and comments always open -->
+        <div class="post-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <a href="/profile/{{ post.user.username }}/" style="display: flex; align-items: center; gap: 10px;">
+                <div class="avatar-wrapper">
+                    <img src="{% if post.user.profile.avatar %}{{ post.user.profile.avatar.url }}{% else %}{% static 'images/default_avatar.png' %}{% endif %}" class="avatar-hex" style="width: 50px; height: 50px;">
+                </div>
+                <span style="font-weight: bold; font-size: 1.3rem;">@{{ post.user.username }}</span>
+            </a>
+        </div>
+
+        <div class="post-caption" style="margin-bottom: 20px; font-size: 1.2rem;">
+            {{ post.caption }}
+            <div style="font-size: 0.9rem; color: gray; margin-top: 5px;">{{ post.created_at }}</div>
+        </div>
+
+        {% if post.media_file %}
+        <div class="post-media" style="position: relative; margin: 0 -1.5rem 1rem -1.5rem; border-top: 3px solid black; border-bottom: 3px solid black; background: #eee;">
+            {% if post.media_type == 'image' %}
+                <img src="{{ post.media_file.url }}" style="width: 100%; display: block;">
+            {% elif post.media_type == 'video' %}
+                <video src="{{ post.media_file.url }}" style="width: 100%; display: block;" controls autoplay muted></video>
+            {% endif %}
+            
+            <!-- Floating pop container for media posts -->
+            <div id="reaction-pop-{{ post.id }}" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; font-family: var(--font-heading); font-size: 3rem; text-shadow: 3px 3px 0 black; z-index: 5; pointer-events: none;"></div>
+        </div>
+        {% else %}
+        <!-- Floating pop container placeholder for text-only posts -->
+        <div style="position: relative; height: 10px; margin-bottom: 15px;">
+            <div id="reaction-pop-{{ post.id }}" style="position: absolute; top: -20px; left: 50%; transform: translate(-50%, -50%); display: flex; font-family: var(--font-heading); font-size: 3rem; text-shadow: 3px 3px 0 black; z-index: 5; pointer-events: none;"></div>
+        </div>
+        {% endif %}
+
+        <div class="post-reactions mb-4" style="display: flex; gap: 20px; align-items: center; justify-content: center;">
+            <button class="reaction-btn {% if post.user_reaction_type == 'yentroww' %}active{% endif %}" onclick="reactPost({{ post.id }}, 'yentroww')" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 1.2rem; font-family: var(--font-heading);">
+                <span style="font-size: 2rem;">😯</span> <span id="count-yentroww-{{ post.id }}">{{ post.y_count }}</span>
+            </button>
+            <button class="reaction-btn {% if post.user_reaction_type == 'abboww' %}active{% endif %}" onclick="reactPost({{ post.id }}, 'abboww')" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 1.2rem; font-family: var(--font-heading);">
+                <span style="font-size: 2rem;">😆</span> <span id="count-abboww-{{ post.id }}">{{ post.a_count }}</span>
+            </button>
+            <button class="reaction-btn {% if post.user_reaction_type == 'sarlee' %}active{% endif %}" onclick="reactPost({{ post.id }}, 'sarlee')" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 1.2rem; font-family: var(--font-heading);">
+                <span style="font-size: 2rem;">😏</span> <span id="count-sarlee-{{ post.id }}">{{ post.s_count }}</span>
+            </button>
+        </div>
+
+        <h2 class="mb-3">Comments (<span id="comment-count-{{ post.id }}">{{ post.comments.count }}</span>)</h2>
+        
+        <div id="comments-section-{{ post.id }}" style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 2px solid black;">
+            <div id="comments-list-{{ post.id }}" style="margin-bottom: 20px;">
+                {% for comment in post.comments.all %}
+                    <div style="margin-bottom: 15px; display: flex; gap: 10px;">
+                        <img src="{% if comment.user.profile.avatar %}{{ comment.user.profile.avatar.url }}{% else %}{% static 'images/default_avatar.png' %}{% endif %}" class="avatar-hex" style="width: 30px; height: 30px;">
+                        <div>
+                            <a href="/profile/{{ comment.user.username }}/" style="font-weight: bold;">@{{ comment.user.username }}</a>
+                            <div>{{ comment.text }}</div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="comment-input-{{ post.id }}" class="comic-input" placeholder="Type a comment..." style="margin: 0; flex: 1;">
+                <button class="comic-btn btn-primary" onclick="submitComment({{ post.id }})" style="padding: 0.5rem 1rem; font-size: 1rem;">Post</button>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+    const csrftoken = '{{ csrf_token }}';
+</script>
+<script src="{% static 'js/reactions.js' %}"></script>
+<script src="{% static 'js/feed.js' %}"></script>
+
+{% endblock %}

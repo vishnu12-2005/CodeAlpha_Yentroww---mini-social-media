@@ -1,0 +1,19 @@
+<div id="notif-{{ notif.id }}" onclick="readNotif({{ notif.id }}, '{% if notif.notif_type == 'leaderboard' %}/leaderboard/{% elif notif.content_object %}/posts/{{ notif.content_object.id }}/{% else %}/profile/{{ notif.sender.username }}/{% endif %}')" style="display: flex; align-items: center; gap: 15px; padding: 15px; border: 2px solid black; border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: transform 0.2s; background: {% if notif.notif_type == 'leaderboard' %}var(--bright-yellow){% else %}white{% endif %}; {% if not notif.is_read %}border-left: 6px solid var(--bright-yellow); font-weight: bold;{% endif %}" onmouseover="this.style.transform='translateX(5px)'" onmouseout="this.style.transform='translateX(0)'">
+    <img src="{% if notif.sender.profile.avatar %}{{ notif.sender.profile.avatar.url }}{% else %}{% static 'images/default_avatar.png' %}{% endif %}" class="avatar-hex" style="width: 50px; height: 50px;">
+    
+    <div style="flex: 1;">
+        {% if notif.notif_type == 'reaction' %}
+            @{{ notif.sender.username }} reacted 😯 on your post
+        {% elif notif.notif_type == 'comment' %}
+            @{{ notif.sender.username }} commented on your post
+        {% elif notif.notif_type == 'follow' %}
+            @{{ notif.sender.username }} started following you
+            <button onclick="event.stopPropagation(); fetch('/follow/{{ notif.sender.username }}/', {method:'POST', headers:{'X-CSRFToken': '{{ csrf_token }}'}}).then(()=>alert('Toggled follow!'))" class="comic-btn btn-primary mt-1" style="padding: 0.2rem 0.5rem; font-size: 0.8rem; display: block;">Follow Back</button>
+        {% elif notif.notif_type == 'leaderboard' %}
+            🏆 You're on this week's leaderboard!
+        {% else %}
+            @{{ notif.sender.username }} interacted with you
+        {% endif %}
+        <div style="color: gray; font-size: 0.8rem; font-weight: normal; margin-top: 5px;">{{ notif.created_at|timesince }} ago</div>
+    </div>
+</div>

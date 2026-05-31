@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="comic-card" style="display: flex; flex-direction: column; height: calc(100vh - 120px); padding: 0; overflow: hidden;">
+    <!-- Top Bar -->
+    <div style="padding: 15px; background: var(--primary-red); color: white; border-bottom: 3px solid black; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <a href="/messages/" style="color: white; font-size: 1.5rem; text-decoration: none; font-weight: bold;">←</a>
+            <a href="/profile/{{ other_user.username }}/" style="display: flex; align-items: center; gap: 10px; color: white;">
+                <img src="{% if other_user.profile.avatar %}{{ other_user.profile.avatar.url }}{% else %}{% static 'images/default_avatar.png' %}{% endif %}" class="avatar-hex" style="width: 40px; height: 40px; border: 2px solid white;">
+                <span class="brand-text" style="font-size: 1.5rem;">@{{ other_user.username }}</span>
+            </a>
+        </div>
+        <span style="font-size: 1.5rem; cursor: pointer; font-weight: bold;">⋮</span>
+    </div>
+
+    <!-- Messages Area -->
+    <div id="chat-messages" style="flex: 1; overflow-y: auto; padding: 20px; background: #fafafa; display: flex; flex-direction: column; gap: 10px;">
+        {% for msg in messages %}
+            <div style="display: flex; {% if msg.sender == request.user %}justify-content: flex-end;{% else %}justify-content: flex-start;{% endif %}">
+                <div style="max-width: 70%; padding: 10px 15px; border-radius: 20px; border: 2px solid black; box-shadow: 2px 2px 0 black;
+                    {% if msg.sender == request.user %}background: var(--primary-red); color: white; border-bottom-right-radius: 5px;{% else %}background: var(--bright-yellow); color: black; border-bottom-left-radius: 5px;{% endif %}">
+                    {% if msg.shared_post %}
+                        <a href="/posts/{{ msg.shared_post.id }}/" style="display: block; font-weight: bold; margin-bottom: 5px; {% if msg.sender == request.user %}color: var(--bright-yellow);{% endif %}">
+                            Shared Post: @{{ msg.shared_post.user.username }}
+                        </a>
+                    {% endif %}
+                    {% if msg.text %}
+                        {{ msg.text }}
+                    {% endif %}
+                </div>
+            </div>
+            <div style="font-size: 0.7rem; color: gray; margin-top: -5px; margin-bottom: 10px; {% if msg.sender == request.user %}text-align: right;{% endif %}">
+                {{ msg.created_at|date:"h:i A" }}
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Input Bar -->
+    <div style="padding: 15px; border-top: 3px solid black; background: white; display: flex; gap: 10px; align-items: center;">
+        <button style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">📎</button>
+        <input type="text" id="chat-input" class="comic-input" placeholder="Type something..." style="margin: 0; flex: 1;">
+        <button class="comic-btn btn-primary" onclick="sendMessage()" style="padding: 0.5rem 1rem;">Send →</button>
+    </div>
+</div>
+
+<script>
+const convId = {{ conversation.id }};
+const chatMessages = document.getElementById('chat-messages');
+
+// Scroll to bottom on load
+chatMessages.scrollTop = chatMessages.scrollHeight;
+
+// Mark seen on load
+fetch(`/messages/${convId}/seen/`, {
+    method: 'POST',
+    headers: {'X-CSRFToken': '{{ csrf_token }}'}
+});
+
+function sendMessage() {
+    const input = document.getElementById('chat-input');
+    const text = input.value.trim();
+    if (!text) return;
+
+    fetch(`/messages/${convId}/send/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({text: text})
+    }).then(r => r.json()).then(data => {
+        if(data.status === 'success') {
+            appendMessage(data.text, data.timestamp, true);
+            input.value = '';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    });
+}
+
+function appendMessage(text, timestamp, isMine) {
+    const div = document.createElement('div');
+    div.style.display = 'flex';
+    div.style.justifyContent = isMine ? 'flex-end' : 'flex-start';
+    
+    const bg = isMine ? 'var(--primary-red)' : 'var(--bright-yellow)';
+    const color = isMine ? 'white' : 'black';
+    const borderRadius = isMine ? '20px 20px 5px 20px' : '20px 20px 20px 5px';
+    
+    div.innerHTML = `
+        <div style="max-width: 70%; padding: 10px 15px; border-radius: ${borderRadius}; border: 2px solid black; box-shadow: 2px 2px 0 black; background: ${bg}; color: ${color};">
+            ${text}
+        </div>
+    `;
+    
+    const timeDiv = document.createElement('div');
+    timeDiv.style.fontSize = '0.7rem';
+    timeDiv.style.color = 'gray';
+    timeDiv.style.marginTop = '5px';
+    timeDiv.style.marginBottom = '10px';
+    timeDiv.style.textAlign = isMine ? 'right' : 'left';
+    timeDiv.innerText = timestamp;
+    
+    chatMessages.appendChild(div);
+    chatMessages.appendChild(timeDiv);
+}
+
+// Basic polling for new messages (ignoring last_msg_id for simplicity, just an alert)
+setInterval(() => {
+    // In a full implementation, pass ?after=last_msg_id
+    // fetch(`/messages/${convId}/poll/`)
+}, 3000);
+
+document.getElementById('chat-input').addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') sendMessage();
+});
+</script>
+{% endblock %}

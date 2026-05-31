@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="comic-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h1 class="brand-text m-0" style="font-size: 2.5rem;">Notifications</h1>
+        <button onclick="markAllRead()" class="comic-btn btn-secondary" style="padding: 0.5rem; font-size: 1rem;">Mark all read</button>
+    </div>
+
+    {% if not today_notifs and not week_notifs and not earlier_notifs %}
+        <div class="text-center" style="font-family: var(--font-heading); font-size: 2rem; margin-top: 3rem; color: gray;">
+            All quiet here 😏 Go post something!
+        </div>
+    {% endif %}
+
+    {% if today_notifs %}
+        <h3 class="mb-3" style="font-family: var(--font-heading);">Today</h3>
+        {% for notif in today_notifs %}
+            {% include 'notifications/notif_row.html' %}
+        {% endfor %}
+    {% endif %}
+
+    {% if week_notifs %}
+        <h3 class="mb-3 mt-4" style="font-family: var(--font-heading);">This Week</h3>
+        {% for notif in week_notifs %}
+            {% include 'notifications/notif_row.html' %}
+        {% endfor %}
+    {% endif %}
+    
+    {% if earlier_notifs %}
+        <h3 class="mb-3 mt-4" style="font-family: var(--font-heading);">Earlier</h3>
+        {% for notif in earlier_notifs %}
+            {% include 'notifications/notif_row.html' %}
+        {% endfor %}
+    {% endif %}
+</div>
+<script src="{% static 'js/notifications.js' %}"></script>
+{% endblock %}

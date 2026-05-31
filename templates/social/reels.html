@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    /* Full screen vertical scroll specifically for reels page inside main-content */
+    .reels-container {
+        height: calc(100vh - 100px);
+        overflow-y: scroll;
+        scroll-snap-type: y mandatory;
+        margin: -2rem; /* Override padding from main-content */
+        background: black;
+    }
+    
+    .reel-wrapper {
+        height: 100%;
+        width: 100%;
+        scroll-snap-align: start;
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .reel-video {
+        height: 100%;
+        max-width: 100%;
+        object-fit: contain;
+    }
+    
+    .reel-overlay {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        pointer-events: none;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 20px;
+    }
+    
+    .reel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        pointer-events: auto;
+    }
+    
+    .reel-bottom {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        pointer-events: auto;
+    }
+    
+    .reel-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        align-items: center;
+    }
+</style>
+
+<div class="reels-container">
+    {% for reel in reels %}
+    <div class="reel-wrapper">
+        <video class="reel-video" src="{{ reel.video_file.url }}" loop playsinline onclick="this.muted = !this.muted" muted></video>
+        
+        <!-- Floating pop container -->
+        <div id="reaction-pop-reel-{{ reel.id }}" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; font-family: var(--font-heading); font-size: 3rem; text-shadow: 3px 3px 0 black; z-index: 5; pointer-events: none;"></div>
+        
+        <div class="reel-overlay">
+            <div class="reel-header">
+                <a href="/profile/{{ reel.user.username }}/" style="display: flex; align-items: center; gap: 10px; color: white; text-shadow: 1px 1px 2px black;">
+                    <img src="{% if reel.user.profile.avatar %}{{ reel.user.profile.avatar.url }}{% else %}{% static 'images/default_avatar.png' %}{% endif %}" class="avatar-hex" style="width: 40px; height: 40px; border: 2px solid white;">
+                    <span style="font-weight: bold; font-size: 1.1rem;">@{{ reel.user.username }}</span>
+                </a>
+                <div class="post-menu-wrapper" style="position: relative; pointer-events: auto;">
+                    <span style="color: white; font-size: 1.8rem; text-shadow: 1px 1px 2px black; cursor: pointer;" onclick="toggleReelMenu({{ reel.id }})">⋮</span>
+                    <div id="reel-menu-{{ reel.id }}" class="post-menu comic-card" style="display: none; position: absolute; right: 0; top: 30px; width: 180px; z-index: 100; padding: 5px 0; background: white;">
+                        <div class="post-menu-item" onclick="reportReel({{ reel.id }})" style="padding: 10px; cursor: pointer; font-weight: bold; color: var(--primary-red);">🚨 Report Reel</div>
+                        <div class="post-menu-item" onclick="muteUser('{{ reel.user.username }}')" style="padding: 10px; cursor: pointer; font-weight: bold;">🔇 Mute User</div>
+                        <div class="post-menu-item" onclick="copyReelLink({{ reel.id }})" style="padding: 10px; cursor: pointer; font-weight: bold;">🔗 Copy Link</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="reel-bottom">
+                <div class="reel-caption" style="color: white; text-shadow: 1px 1px 2px black; max-width: 70%;">
+                    <p style="font-size: 1.1rem; margin-bottom: 5px;">{{ reel.caption }}</p>
+                </div>
+                
+                <div class="reel-actions" style="pointer-events: auto; display: flex; flex-direction: column; gap: 20px; align-items: center;">
+                    <!-- Reactions -->
+                    <button class="reaction-btn-reel {% if reel.user_reaction_type == 'yentroww' %}active{% endif %}" onclick="reactReel({{ reel.id }}, 'yentroww')" style="background: none; border: none; cursor: pointer; color: white; filter: drop-shadow(2px 2px 0 black); font-size: 1.8rem; text-align: center; display: flex; flex-direction: column; align-items: center; padding: 0;">
+                        😯 <span id="count-reel-yentroww-{{ reel.id }}" style="font-size: 1rem; font-family: var(--font-heading); display: block; margin-top: -2px;">{{ reel.y_count }}</span>
+                    </button>
+                    <button class="reaction-btn-reel {% if reel.user_reaction_type == 'abboww' %}active{% endif %}" onclick="reactReel({{ reel.id }}, 'abboww')" style="background: none; border: none; cursor: pointer; color: white; filter: drop-shadow(2px 2px 0 black); font-size: 1.8rem; text-align: center; display: flex; flex-direction: column; align-items: center; padding: 0;">
+                        😆 <span id="count-reel-abboww-{{ reel.id }}" style="font-size: 1rem; font-family: var(--font-heading); display: block; margin-top: -2px;">{{ reel.a_count }}</span>
+                    </button>
+                    <button class="reaction-btn-reel {% if reel.user_reaction_type == 'sarlee' %}active{% endif %}" onclick="reactReel({{ reel.id }}, 'sarlee')" style="background: none; border: none; cursor: pointer; color: white; filter: drop-shadow(2px 2px 0 black); font-size: 1.8rem; text-align: center; display: flex; flex-direction: column; align-items: center; padding: 0;">
+                        😏 <span id="count-reel-sarlee-{{ reel.id }}" style="font-size: 1rem; font-family: var(--font-heading); display: block; margin-top: -2px;">{{ reel.s_count }}</span>
+                    </button>
+                    
+                    <!-- Comments button -->
+                    <div style="color: white; text-align: center; cursor: pointer; filter: drop-shadow(2px 2px 0 black);" onclick="openReelComments({{ reel.id }})">
+                        <div style="font-size: 1.8rem;">💬</div>
+                        <span id="comment-count-reel-main-{{ reel.id }}" style="font-size: 1rem; font-family: var(--font-heading);">{{ reel.comments.count }}</span>
+                    </div>
+                    
+                    <!-- Share button -->
+                    <div style="color: white; text-align: center; cursor: pointer; filter: drop-shadow(2px 2px 0 black);" onclick="shareReel({{ reel.id }})">
+                        <div style="font-size: 1.8rem;">📤</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Reel Comments Modal -->
+<div id="reel-comments-modal" class="modal-overlay" style="display:none; z-index: 10000;">
+    <div class="modal-card" style="max-width: 500px; max-height: 80vh; display: flex; flex-direction: column; border: 3px solid black; box-shadow: 8px 8px 0 var(--deep-black);">
+        <div class="modal-header" style="background: var(--primary-red); border-bottom: 3px solid black;">
+            <h2 class="brand-text" style="color: var(--bright-yellow); margin:0;">Comments 💬</h2>
+            <span class="modal-close" onclick="closeReelComments()" style="color: white; font-weight: bold; cursor: pointer; font-size: 1.5rem;">✕</span>
+        </div>
+        <div class="modal-body" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding: 20px; background: white;" id="reel-comments-list">
+            <!-- Comments list will load here -->
+        </div>
+        <div style="padding: 15px; border-top: 3px dashed black; background: #fafafa; display: flex; gap: 10px;">
+            <input type="text" id="reel-comment-input" class="comic-input" placeholder="Yentroo, write a comment..." style="flex:1; margin:0;">
+            <button onclick="submitReelComment()" class="comic-btn btn-primary" style="padding: 0.5rem 1rem;">POST</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const csrftoken = '{{ csrf_token }}';
+</script>
+<script src="{% static 'js/reactions.js' %}"></script>
+<script src="{% static 'js/feed.js' %}"></script>
+
+<script>
+    // Auto-play videos when they come into view
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.play();
+            } else {
+                entry.target.pause();
+            }
+        });
+    }, { threshold: 0.7 });
+    
+    document.querySelectorAll('.reel-video').forEach(video => {
+        observer.observe(video);
+    });
+
+    // Reels-specific interactions
+    function toggleReelMenu(reelId) {
+        const menu = document.getElementById(`reel-menu-${reelId}`);
+        if (menu.style.display === 'none') {
+            menu.style.display = 'block';
+        } else {
+            menu.style.display = 'none';
+        }
+    }
+
+    // Close menus on clicking elsewhere
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.post-menu-wrapper')) {
+            document.querySelectorAll('.post-menu').forEach(m => m.style.display = 'none');
+        }
+    });
+
+    function reportReel(reelId) {
+        fetch(`/reels/${reelId}/report/`, {
+            method: 'POST',
+            headers: {'X-CSRFToken': csrftoken}
+        }).then(r => r.json()).then(data => {
+            if (data.status === 'success') {
+                showToast("Reel reported successfully! 🚨");
+                document.getElementById(`reel-menu-${reelId}`).style.display = 'none';
+            }
+        });
+    }
+
+    function copyReelLink(reelId) {
+        const link = window.location.origin + `/reels/${reelId}/`;
+        navigator.clipboard.writeText(link).then(() => {
+            showToast("Reel link copied to clipboard! 🔗");
+            document.getElementById(`reel-menu-${reelId}`).style.display = 'none';
+        });
+    }
+
+    // Comments Modal
+    let currentReelIdForComments = null;
+
+    function openReelComments(reelId) {
+        currentReelIdForComments = reelId;
+        const modal = document.getElementById('reel-comments-modal');
+        modal.style.display = 'flex';
+        const list = document.getElementById('reel-comments-list');
+        list.innerHTML = '<div style="text-align:center; padding: 20px; font-family: var(--font-heading);">Loading comments...</div>';
+        
+        fetch(`/reels/${reelId}/comments/`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === 'success') {
+                if (data.comments.length === 0) {
+                    list.innerHTML = '<div style="text-align:center; padding: 40px; font-family: var(--font-heading); color: var(--primary-red); font-size: 1.5rem;">No comments yet! Be the first 😯</div>';
+                    return;
+                }
+                let html = '';
+                data.comments.forEach(c => {
+                    html += `
+                        <div class="comic-card" style="padding: 10px; margin-bottom: 5px; display: flex; gap: 10px; align-items: start; background: white; border: 2px solid black;">
+                            <img src="${c.avatar_url}" class="avatar-hex" style="width: 35px; height: 35px;">
+                            <div>
+                                <a href="/profile/${c.username}/" style="font-weight: bold; color: var(--accent-blue);">@${c.username}</a>
+                                <p style="margin: 3px 0 0 0; word-break: break-word;">${c.text}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+                list.innerHTML = html;
+            }
+        });
+    }
+
+    function submitReelComment() {
+        if (!currentReelIdForComments) return;
+        const input = document.getElementById('reel-comment-input');
+        const text = input.value.trim();
+        if (!text) return;
+        
+        fetch(`/reels/${currentReelIdForComments}/comment/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify({ text: text })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === 'success') {
+                input.value = '';
+                
+                // update dynamic count spans
+                const countSpanMain = document.getElementById(`comment-count-reel-main-${currentReelIdForComments}`);
+                if (countSpanMain) {
+                    countSpanMain.innerText = parseInt(countSpanMain.innerText) + 1;
+                }
+                
+                // Refresh list
+                openReelComments(currentReelIdForComments);
+            }
+        });
+    }
+
+    function closeReelComments() {
+        document.getElementById('reel-comments-modal').style.display = 'none';
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block landing %}
+<div class="bg-red-halftone landing-hero">
+    <img src="{% static 'images/logo.png' %}" alt="yentroww logo" style="height: 150px; margin-bottom: 20px;">
+    <h1 class="landing-title brand-text">yentroww</h1>
+    <p class="landing-tagline">Post something worth a yentroww 😯</p>
+    
+    <div style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
+        <a href="/auth/register/" class="comic-btn btn-primary">Join Now</a>
+        <a href="/auth/login/" class="comic-btn btn-secondary">Login</a>
+    </div>
+
+    <div class="features-grid">
+        <div class="comic-card">
+            <h2 class="mb-2">React differently 😯</h2>
+            <p>Yentroww, Abboww, Sarlee reactions</p>
+        </div>
+        <div class="comic-card">
+            <h2 class="mb-2">Weekly Winners 🏆</h2>
+            <p>Top Yentroww scorers win rewards</p>
+        </div>
+        <div class="comic-card">
+            <h2 class="mb-2">Your Circle 👥</h2>
+            <p>Follow people, build your feed</p>
+        </div>
+    </div>
+    
+    <footer style="margin-top: 40px; color: var(--clean-white); font-weight: bold;">
+        yentroww © 2024
+    </footer>
+</div>
+{% endblock %}

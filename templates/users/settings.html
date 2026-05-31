@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<h1 class="brand-text mb-4" style="font-size: 3rem;">Settings</h1>
+
+<div class="comic-card mb-4">
+    <h2>Profile</h2>
+    <p class="mt-2 mb-3">Update your avatar, bio, and website.</p>
+    <a href="/profile/edit/" class="comic-btn btn-secondary" style="font-size: 1rem;">Edit Profile</a>
+</div>
+
+<!-- Account Type -->
+<div class="comic-card mb-4">
+    <h2>Account Type</h2>
+    <p class="mt-2 mb-3">Choose who can see your posts and profile.</p>
+    <div class="account-type-options">
+        <div class="account-type-card {% if user.profile.account_type == 'public' %}selected{% endif %}" onclick="setAccountType('public')" id="at-public">
+            <span class="tick-mark">✓</span>
+            <div style="font-size: 2rem; margin-bottom: 5px;">🌐</div>
+            <div style="font-family: var(--font-heading); font-size: 1.2rem;">Public</div>
+            <div style="font-size: 0.8rem; color: #666; margin-top: 5px;">Everyone can see your posts</div>
+        </div>
+        <div class="account-type-card {% if user.profile.account_type == 'private' %}selected{% endif %}" onclick="setAccountType('private')" id="at-private">
+            <span class="tick-mark">✓</span>
+            <div style="font-size: 2rem; margin-bottom: 5px;">🔒</div>
+            <div style="font-family: var(--font-heading); font-size: 1.2rem;">Private</div>
+            <div style="font-size: 0.8rem; color: #666; margin-top: 5px;">Only followers can see</div>
+        </div>
+    </div>
+</div>
+
+<!-- Privacy & Mutes -->
+<div class="comic-card mb-4">
+    <h2 class="mb-3">Privacy & Mutes</h2>
+    
+    <!-- Muted Accounts -->
+    <div class="privacy-section" id="sec-muted-accounts">
+        <div class="privacy-section-header" onclick="togglePrivacySection('sec-muted-accounts')">
+            <span>🔇 Muted Accounts ({{ muted_accounts|length }})</span>
+            <span class="privacy-section-arrow">▼</span>
+        </div>
+        <div class="privacy-section-body">
+            {% for muted in muted_accounts %}
+            <div class="privacy-user-item" id="muted-{{ muted.muted_user.username }}">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <img src="{% if muted.muted_user.profile.avatar %}{{ muted.muted_user.profile.avatar.url }}{% else %}{% static 'images/default_avatar.png' %}{% endif %}" class="avatar-hex" style="width: 35px; height: 35px;">
+                    <a href="/profile/{{ muted.muted_user.username }}/" style="font-weight: bold;">@{{ muted.muted_user.username }}</a>
+                </div>
+                <button class="comic-btn btn-white" style="padding: 4px 12px; font-size: 0.9rem;" onclick="unmute('{{ muted.muted_user.username }}')">Unmute</button>
+            </div>
+            {% empty %}
+            <div class="privacy-empty">No one is muted 🎉</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Muted Stories -->
+    <div class="privacy-section" id="sec-muted-stories">
+        <div class="privacy-section-header" onclick="togglePrivacySection('sec-muted-stories')">
+            <span>🙈 Muted Stories ({{ muted_stories|length }})</span>
+            <span class="privacy-section-arrow">▼</span>
+        </div>
+        <div class="privacy-section-body">
+            {% for muted in muted_stories %}
+            <div class="privacy-user-item" id="muted-story-{{ muted.muted_user.username }}">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <img src="{% if muted.muted_user.profile.avatar %}{{ muted.muted_user.profile.avatar.url }}{% else %}{% static 'images/default_avatar.png' %}{% endif %}" class="avatar-hex" style="width: 35px; height: 35px;">
+                    <a href="/profile/{{ muted.muted_user.username }}/" style="font-weight: bold;">@{{ muted.muted_user.username }}</a>
+                </div>
+                <button class="comic-btn btn-white" style="padding: 4px 12px; font-size: 0.9rem;" onclick="unmuteStory('{{ muted.muted_user.username }}')">Unmute</button>
+            </div>
+            {% empty %}
+            <div class="privacy-empty">No stories muted 🎉</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Blocked Accounts -->
+    <div class="privacy-section" id="sec-blocked-accounts">
+        <div class="privacy-section-header" onclick="togglePrivacySection('sec-blocked-accounts')">
+            <span>🚫 Blocked Accounts ({{ blocked_accounts|length }})</span>
+            <span class="privacy-section-arrow">▼</span>
+        </div>
+        <div class="privacy-section-body">
+            {% for blocked in blocked_accounts %}
+            <div class="privacy-user-item" id="blocked-{{ blocked.blocked_user.username }}">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <img src="{% if blocked.blocked_user.profile.avatar %}{{ blocked.blocked_user.profile.avatar.url }}{% else %}{% static 'images/default_avatar.png' %}{% endif %}" class="avatar-hex" style="width: 35px; height: 35px;">
+                    <a href="/profile/{{ blocked.blocked_user.username }}/" style="font-weight: bold;">@{{ blocked.blocked_user.username }}</a>
+                </div>
+                <button class="comic-btn btn-white" style="padding: 4px 12px; font-size: 0.9rem;" onclick="unblock('{{ blocked.blocked_user.username }}')">Unblock</button>
+            </div>
+            {% empty %}
+            <div class="privacy-empty">No one is blocked 🎉</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Language -->
+<div class="comic-card mb-4">
+    <h2>Language</h2>
+    <div class="mt-3">
+        <div class="language-card">
+            <span>✓</span>
+            <span>English</span>
+        </div>
+    </div>
+</div>
+
+<div class="comic-card mb-4">
+    <h2>Verification</h2>
+    <div class="mt-2">
+        {% if user.profile.is_verified %}
+            <span class="comic-btn btn-primary" style="background-color: var(--accent-blue); font-size: 1rem; cursor: default;">✓ Verified</span>
+        {% elif user.profile.verification_requested %}
+            <span class="comic-btn btn-white" style="color: gray; border-color: gray; font-size: 1rem; cursor: default;">✓ Sent for verification</span>
+        {% else %}
+            <form method="post" action="{% url 'request_verification' %}">
+                {% csrf_token %}
+                <button type="submit" class="comic-btn btn-primary" style="font-size: 1rem;">Get Verified ✓</button>
+            </form>
+        {% endif %}
+    </div>
+</div>
+
+<div class="mt-4">
+    <a href="/auth/logout/" class="comic-btn btn-primary">LOGOUT</a>
+</div>
+
+<script>
+const csrftoken = '{{ csrf_token }}';
+
+function setAccountType(type) {
+    fetch('/settings/toggle-account-type/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+        },
+        body: JSON.stringify({ account_type: type })
+    }).then(r => r.json()).then(data => {
+        if (data.status === 'success') {
+            document.getElementById('at-public').classList.toggle('selected', type === 'public');
+            document.getElementById('at-private').classList.toggle('selected', type === 'private');
+            // Pop animation
+            const card = document.getElementById('at-' + type);
+            card.style.transform = 'scale(1.05)';
+            setTimeout(() => card.style.transform = '', 200);
+            showToast(`Account privacy updated to ${type}! 🌐`);
+        }
+    });
+}
+
+function togglePrivacySection(id) {
+    const section = document.getElementById(id);
+    section.classList.toggle('open');
+}
+
+function unmute(username) {
+    fetch(`/settings/unmute/${username}/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrftoken }
+    }).then(r => r.json()).then(data => {
+        if (data.status === 'success') {
+            const item = document.getElementById('muted-' + username);
+            item.style.opacity = '0';
+            setTimeout(() => item.remove(), 300);
+            showToast(`Unmuted @${username}! 🔊`);
+        }
+    });
+}
+
+function unmuteStory(username) {
+    fetch(`/settings/unmute-story/${username}/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrftoken }
+    }).then(r => r.json()).then(data => {
+        if (data.status === 'success') {
+            const item = document.getElementById('muted-story-' + username);
+            item.style.opacity = '0';
+            setTimeout(() => item.remove(), 300);
+            showToast(`Unmuted stories from @${username}! 🔊`);
+        }
+    });
+}
+
+function unblock(username) {
+    fetch(`/settings/unblock/${username}/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrftoken }
+    }).then(r => r.json()).then(data => {
+        if (data.status === 'success') {
+            const item = document.getElementById('blocked-' + username);
+            item.style.opacity = '0';
+            setTimeout(() => item.remove(), 300);
+            showToast(`Unblocked @${username}! ✅`);
+        }
+    });
+}
+</script>
+{% endblock %}

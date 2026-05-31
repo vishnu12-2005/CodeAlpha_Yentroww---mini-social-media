@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<!-- 1. Stories Bar -->
+<div class="stories-bar mb-4" style="display: flex; gap: 15px; overflow-x: auto; padding-bottom: 10px;">
+    {% for item in stories_list %}
+        {% if item.is_self %}
+        <!-- Self Story -->
+        <div class="story-bubble-wrapper text-center" style="cursor:pointer;" onclick="{% if item.has_stories %}openStoryViewer({{ item.user.id }}){% else %}window.location.href='/stories/create/'{% endif %}">
+            <div class="avatar-wrapper">
+                <img src="{% if item.user.profile.avatar %}{{ item.user.profile.avatar.url }}{% else %}{% static 'images/default_avatar.png' %}{% endif %}" alt="your story" class="avatar-hex" style="border: 3px solid var(--bright-yellow);">
+            </div>
+            <div style="font-size: 0.8rem; font-weight: bold;">{% if item.has_stories %}Your Story{% else %}+ Add Story{% endif %}</div>
+        </div>
+        {% else %}
+        <!-- Other User Story -->
+        <div class="story-bubble-wrapper text-center" style="cursor:pointer;" onclick="openStoryViewer({{ item.user.id }})">
+            <div class="avatar-wrapper">
+                <img src="{% if item.user.profile.avatar %}{{ item.user.profile.avatar.url }}{% else %}{% static 'images/default_avatar.png' %}{% endif %}" alt="{{ item.user.username }}" class="avatar-hex" style="border: 3px solid {% if item.all_seen %}var(--deep-black){% else %}var(--bright-yellow){% endif %};">
+            </div>
+            <div style="font-size: 0.8rem; font-weight: bold; width: 60px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ item.user.username }}</div>
+        </div>
+        {% endif %}
+    {% endfor %}
+</div>
+
+<!-- 2. Weekly Leaderboard Card -->
+<a href="/leaderboard/" class="comic-card mb-4" style="display: block; background-color: var(--primary-red); color: var(--clean-white); text-align: center; position: relative; overflow: hidden;">
+    <div style="position: absolute; top: -20px; right: -20px; opacity: 0.3; font-size: 5rem;">💥</div>
+    <h2 style="color: var(--bright-yellow); text-shadow: 2px 2px 0 var(--deep-black);">🏆 Weekly Yentroww Top Scorers</h2>
+    <div style="font-size: 1.2rem; margin: 10px 0; font-weight: bold;">
+        {% for scorer in top_scorers %}
+            {% if forloop.counter == 1 %}🥇{% elif forloop.counter == 2 %}🥈{% else %}🥉{% endif %} {{ scorer.user.username }}
+        {% empty %}
+            No leaders yet!
+        {% endfor %}
+    </div>
+    <div style="font-size: 0.9rem; font-family: var(--font-heading);">Tap to see full ranks →</div>
+</a>
+
+<!-- 3. Post Cards -->
+<div id="feed-posts">
+    {% for post in posts %}
+        <div class="comic-card post-card mb-4" id="post-{{ post.id }}">
+            <div class="post-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <a href="/profile/{{ post.user.username }}/" style="display: flex; align-items: center; gap: 10px;">
+                    <div class="avatar-wrapper">
+                        <img src="{% if post.user.profile.avatar %}{{ post.user.profile.avatar.url }}{% else %}{% static 'images/default_avatar.png' %}{% endif %}" class="avatar-hex" style="width: 40px; height: 40px;">
+                    </div>
+                    <span style="font-weight: bold; font-size: 1.1rem;">@{{ post.user.username }}</span>
+                </a>
+                <div class="post-menu-wrapper" style="position: relative;">
+                    <span style="cursor:pointer; font-weight: bold; font-size: 1.2rem;" onclick="togglePostMenu({{ post.id }})">⋮</span>
+                    <div id="post-menu-{{ post.id }}" class="post-menu" style="display:none; position: absolute; right: 0; top: 20px; background: white; border: 2px solid black; padding: 10px; border-radius: 8px; z-index: 10;">
+                        <div style="cursor:pointer; color: red;" onclick="reportPost({{ post.id }})">🚩 Report</div>
+                        <div style="cursor:pointer; margin-top: 10px;" onclick="muteUser('{{ post.user.username }}')">🔇 Mute Account</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="post-media" style="position: relative; margin: -1.5rem -1.5rem 1rem -1.5rem; border-top: 3px solid black; border-bottom: 3px solid black; background: #eee;">
+                {% if post.media_type == 'image' %}
+                    <img src="{{ post.media_file.url }}" style="width: 100%; display: block;">
+                {% elif post.media_type == 'video' %}
+                    <video src="{{ post.media_file.url }}" style="width: 100%; display: block;" autoplay muted loop onclick="this.muted = !this.muted"></video>
+                {% else %}
+                    <div style="padding: 2rem; font-size: 1.5rem; text-align: center; font-family: var(--font-heading);">
+                        {{ post.caption }}
+                    </div>
+                {% endif %}
+                <!-- Reaction pop container -->
+                <div id="reaction-pop-{{ post.id }}" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; font-family: var(--font-heading); font-size: 3rem; text-shadow: 3px 3px 0 black; z-index: 5; pointer-events: none;"></div>
+            </div>
+
+            <div class="post-reactions mb-3" style="display: flex; gap: 15px; align-items: center; justify-content: center;">
+                <button class="reaction-btn {% if post.user_reaction_type == 'yentroww' %}active{% endif %}" onclick="reactPost({{ post.id }}, 'yentroww')" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 1.2rem; font-family: var(--font-heading);">
+                    <span style="font-size: 2rem;">😯</span> <span id="count-yentroww-{{ post.id }}">{{ post.y_count }}</span>
+                </button>
+                <button class="reaction-btn {% if post.user_reaction_type == 'abboww' %}active{% endif %}" onclick="reactPost({{ post.id }}, 'abboww')" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 1.2rem; font-family: var(--font-heading);">
+                    <span style="font-size: 2rem;">😆</span> <span id="count-abboww-{{ post.id }}">{{ post.a_count }}</span>
+                </button>
+                <button class="reaction-btn {% if post.user_reaction_type == 'sarlee' %}active{% endif %}" onclick="reactPost({{ post.id }}, 'sarlee')" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 1.2rem; font-family: var(--font-heading);">
+                    <span style="font-size: 2rem;">😏</span> <span id="count-sarlee-{{ post.id }}">{{ post.s_count }}</span>
+                </button>
+            </div>
+
+            <div class="post-actions" style="display: flex; gap: 20px; font-weight: bold; border-top: 2px dashed #ccc; padding-top: 10px; margin-bottom: 10px;">
+                <span style="cursor: pointer;" onclick="toggleComments({{ post.id }})">💬 <span id="comment-count-{{ post.id }}">{{ post.comments.count }}</span> comments</span>
+                <span style="cursor: pointer;" onclick="sharePost({{ post.id }})">📤 Share</span>
+            </div>
+
+            <div class="post-caption" style="margin-bottom: 10px;">
+                <a href="/profile/{{ post.user.username }}/" style="font-weight: bold;">@{{ post.user.username }}</a> {{ post.caption }}
+                <div style="font-size: 0.8rem; color: gray; margin-top: 5px;">{{ post.created_at|timesince }} ago</div>
+            </div>
+
+            <div id="comments-section-{{ post.id }}" style="display: none; background: #f9f9f9; padding: 10px; border-radius: 8px; border: 2px solid black;">
+                <div id="comments-list-{{ post.id }}" style="max-height: 200px; overflow-y: auto; margin-bottom: 10px;">
+                    {% for comment in post.comments.all %}
+                        <div style="margin-bottom: 10px;">
+                            <a href="/profile/{{ comment.user.username }}/" style="font-weight: bold;">@{{ comment.user.username }}</a> {{ comment.text }}
+                        </div>
+                    {% endfor %}
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="comment-input-{{ post.id }}" class="comic-input" placeholder="Type a comment..." style="margin: 0; flex: 1;">
+                    <button class="comic-btn btn-primary" onclick="submitComment({{ post.id }})" style="padding: 0.5rem 1rem; font-size: 1rem;">Post</button>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="comic-card text-center" style="padding: 3rem;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">😯</div>
+            <h2 class="brand-text">No Posts Yet!</h2>
+            <p class="mt-2">Follow some people or create your first post to fill up your feed.</p>
+            <a href="/explore/" class="comic-btn btn-primary mt-3">Explore</a>
+        </div>
+    {% endfor %}
+</div>
+
+<!-- Story Viewer Overlay -->
+<div id="story-viewer-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: black; z-index: 2000; color: white;">
+    <div id="story-progress-container" style="position: absolute; top: 10px; left: 10px; right: 10px; display: flex; gap: 5px; z-index: 2001;"></div>
+    
+    <div style="position: absolute; top: 30px; left: 20px; z-index: 2001; display: flex; align-items: center; gap: 10px; width: calc(100% - 40px); justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <img id="story-avatar" src="" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid white;">
+            <span id="story-username" style="font-weight: bold; text-shadow: 1px 1px 2px black;"></span>
+            <span id="story-time" style="font-size: 0.8rem; color: rgba(255,255,255,0.7);"></span>
+        </div>
+        <span style="font-weight: bold; cursor: pointer; font-size: 1.5rem;" onclick="closeStoryViewer()">✕</span>
+    </div>
+    
+    <div id="story-media-container" style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; position: relative;">
+        <!-- Media inserted here -->
+        <div style="position: absolute; left: 0; top: 0; width: 50%; height: 100%; z-index: 2000; cursor: pointer;" onclick="prevStory()"></div>
+        <div style="position: absolute; right: 0; top: 0; width: 50%; height: 100%; z-index: 2000; cursor: pointer;" onclick="nextStory()"></div>
+    </div>
+    
+    <!-- Reply bar (hidden for own stories) -->
+    <div id="story-reply-bar" class="story-reply-bar" style="display: none;">
+        <input type="text" id="story-reply-input" placeholder="Reply to story..." onkeypress="if(event.key==='Enter')sendStoryReply()">
+        <button class="story-send-btn" onclick="sendStoryReply()">➤</button>
+    </div>
+</div>
+
+<!-- CSRF Token for AJAX -->
+<script>
+    const csrftoken = '{{ csrf_token }}';
+    const currentUserId = {{ user.id }};
+    const storiesData = {{ stories_json|safe }};
+</script>
+<script src="{% static 'js/reactions.js' %}"></script>
+<script src="{% static 'js/stories.js' %}"></script>
+<script src="{% static 'js/feed.js' %}"></script>
+
+{% endblock %}
